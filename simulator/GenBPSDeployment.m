@@ -26,8 +26,8 @@ switch lower(DeploymentType)
 	BPSDeployment.Y=rand(NumBPS,1)*SizeY;
     case 'uniform'
 	ratio= SizeX/SizeY; 
-	YNum=floor(sqrt(NumBPS/ratio));
-	XNum=floor(NumBPS/YNum);
+	YNum=floor(sqrt(NumBPS/ratio))
+	XNum=floor(NumBPS/YNum)
 	BPSDeployment.num=XNum*YNum;
 	BPSDeployment.X=zeros(BPSDeployment.num,1);
 	BPSDeployment.Y=zeros(BPSDeployment.num,1);
@@ -38,7 +38,7 @@ switch lower(DeploymentType)
 	    for j=1:YNum
 		idx=(i-1)*YNum+j;
 		BPSDeployment.X(idx)=Xcord(i);
-		BPSDeployment.Y(idx)=Xcord(j);
+		BPSDeployment.Y(idx)=Ycord(j);
 	    end
 	end
 	BPSDeployment.R=repmat([BPSRadius],BPSDeployment.num,1);

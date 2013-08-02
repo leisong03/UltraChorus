@@ -1,14 +1,17 @@
-function SimuEngine(XSize,YSize,NumBPS,radius,NumAgent,DepMode)
+function SimuEngine(XSize,YSize,NumBPS,rangerr,NumAgent,DepMode)
 close all;
 %XSize=100;
 %YSize=100;
 %NumBPS=100;
 %radius=4;
 %ThisUDG=UniDiskGraph(BMSPos);
+Tw=5;
+Velocity=330;
+Dw=Tw/1000*Velocity;
 OutputSeq=0;
-OutputUI=0;
+OutputUI=1;
 OutputCountingSeq=0;
-BPSDeployment=GenBPSDeployment(NumBPS,'rand',radius,XSize,YSize);    %return the BPSDeployment structure
+BPSDeployment=GenBPSDeployment(NumBPS,DepMode,1,XSize,YSize);   %return the BPSDeployment structure
 delta=.05;  %interval of angle
 theta=0:delta:2*pi;
 OutlineX=zeros(size(theta,1),length(theta));
@@ -26,16 +29,14 @@ AgentVel=1+rand(NumAgent,1); %velocity of agent
 LastPos=rand(NumAgent,2).*repmat([XSize,YSize],NumAgent,1); %Initial position of agetn 
 dir=2*pi*rand(NumAgent,1); %initial moving direction
 %split the UI into 2 subfigure
-ChannelLive=subplot(1,2,1); %plot Live into left window
-UDG=subplot(1,2,2); %plot UDG in right window
+ChannelLive=figure(); %plot Live into left window
+%UDG=subplot(1,2,2); %plot UDG in right window
 
 RealTrackX=zeros(length([0:deltaT:T]),NumAgent);
 RealTrackY=zeros(length([0:deltaT:T]),NumAgent);
 EstTrackX=zeros(length([0:deltaT:T]),NumAgent*2);
 EstTrackY=zeros(length([0:deltaT:T]),NumAgent*2);
 AssignToID=zeros(length([0:deltaT:T]),NumAgent*2);
-RealInBoxSeq=zeros(length([0:deltaT:T]),1);
-EstInBoxSeq=zeros(length([0:deltaT:T]),1);
 LocErrVec=[];
 
 Tidx=1;
@@ -47,7 +48,7 @@ for t=0:deltaT:T % for each time
 	% every 5 seconds, change the direction of agent 
 	dir=2*pi*rand(NumAgent,1);
     end
-    [DeltaX, DeltaY]=pol2cart(dir,AgentVel); 
+    [DeltaX, DeltaY]=pol2cart(dir,AgentVel*deltaT); 
     AgentPos=LastPos+[DeltaX,DeltaY]; %Current position of agent
 
     idx=find(AgentPos(:,1)<0); %if agent across the bound
@@ -67,72 +68,64 @@ for t=0:deltaT:T % for each time
     AgentPos(idx,2)=2*YSize-1*AgentPos(idx,2);
     dir(idx)=2*pi*rand(length(idx),1);
 
-    RealInBox=0;
-    for i=1:size(AgentPos,1)
-	if(AgentPos(i,1)>=20 && AgentPos(i,2)>=20 && AgentPos(i,1)<=80 && AgentPos(i,2)<=80)
-	    RealInBox=RealInBox+1;
+    dist=ones(BPSDeployment.num,size(AgentPos,1)).*-1; %m x n matrix, each row is the distance from receiver i to emitter [1:m]
+
+    for i=1:BPSDeployment.num
+	thisdist=repmat([BPSDeployment.X(i),BPSDeployment.Y(i)],size(AgentPos,1),1)-AgentPos;
+	thisdist=sqrt(thisdist(:,1).^2+thisdist(:,2).^2);
+	thisdist=sort(thisdist);
+	ptr=1;
+	for j=1:size(AgentPos,1)
+	    size(AgentPos,1)
+	    j,Dw
+	    if j==1 
+		dist(i,ptr)=thisdist(j);
+		ptr=ptr+1;
+	    elseif thisdist(j)-thisdist(j-1)>Dw
+		dist(i,ptr)=thisdist(j);
+		ptr=ptr+1;
+	    end
 	end
-	dist=[BPSDeployment.X,BPSDeployment.Y]-repmat(AgentPos(i,:),BPSDeployment.num,1);
-	dist=sqrt(dist(:,1).^2+dist(:,2).^2);
-	idx=find(dist<BPSDeployment.R); %find triggered BPS
-	SensorReading(idx)=1; 
+	if ~isempty(find( dist(i,:)==-1))
+	    disp('too close');
+	    dist(i,:)
+	end
     end
+
     LastPos=AgentPos;
     RealTrackX(Tidx,:)=AgentPos(:,1)';
     RealTrackY(Tidx,:)=AgentPos(:,2)';
     %update the UDG
-    TriggeredBPS=find(SensorReading==1);
-    ActiveBPS.num=length(TriggeredBPS);
-    ActiveBPS.XBound=XSize;
-    ActiveBPS.YBound=YSize;
-    ActiveBPS.X=BPSDeployment.X(TriggeredBPS);
-    ActiveBPS.Y=BPSDeployment.Y(TriggeredBPS);
-    ActiveBPS.R=BPSDeployment.R(TriggeredBPS);
-    ThisUDG=UniDiskGraph(ActiveBPS);
+
+    EstAgentPos=zeros(size(AgentPos,1),2);
 
     %add tracking algorithm here 
-    [n CC]=graphconncomp(ThisUDG,'Directed',false);
-    center=zeros(n,2);
-    EstInBox=0;
-    for i=1:n
-	VinI=find(CC==i);
-	center(i,1)=mean(ActiveBPS.X(VinI));
-	center(i,2)=mean(ActiveBPS.Y(VinI));
-	if(center(i,1)>=20 && center(i,2)>=20 && center(i,1)<=80 && center(i,2)<=80)
-	    EstInBox=EstInBox+1;
-	    minerr=inf;
-	    for j=1:size(AgentPos,1)
-		minerr=min(minerr,norm(AgentPos(j,:)-center(i,:)));
-	    end
-	    LocErrVec=[LocErrVec;minerr];
+    for i=1:size(AgentPos,1)
+	FeasibleDist=ones(BPSDeployment.num,size(AgentPos,1))*-1;
+	PrecDist=repmat(AgentPos(i,:),BPSDeployment.num,1)-[BPSDeployment.X,BPSDeployment.Y];
+	PrecDist=sqrt(PrecDist(:,1).^2+PrecDist(:,2).^2);
+	LowerBound=PrecDist-Dw
+	UpperBound=PrecDist+Dw
+	for j=1:BPSDeployment.num
+	    idx=find(dist(j,:)>=LowerBound(j)&dist(j,:)<=UpperBound(j));
+	    FeasibleDist(j,1:length(idx))=dist(j,idx);
 	end
+	FeasibleDist;
+	ValidIdx=find(FeasibleDist~=-1)
+	AgentPos(i,:)
+	AX=TwoDLSQ([BPSDeployment.X(ValidIdx),BPSDeployment.Y(ValidIdx)],FeasibleDist(ValidIdx))
+	EstAgentPos(i,:)=AX;
     end
-    for i=1:n
-	EstTrackX(Tidx,i)=center(i,1);
-	EstTrackY(Tidx,i)=center(i,2);
-	mindist=inf;
-	NearToID=0;
-	for j=1:size(AgentPos,1);
-	    if mindist>norm(AgentPos(j,:)-center(i,:))
-		mindist=norm(AgentPos(j,:)-center(i,:));
-		NearToID=j;
-	    end
-	end
-	AssignToID(Tidx,i)=NearToID;
-    end
+    EstTrackX(Tidx,:)=EstAgentPos(:,1)';
+    EstTrackX(Tidx,:)=EstInBoxSeq(:,1)';
     %tracking algorithm finished
 
-    EstInBox=min(EstInBox,RealInBox);
-    RealInBox;
-    RealInBoxSeq(Tidx)=RealInBox;
-    EstInBoxSeq(Tidx)=EstInBox;
-    assignin('base','CountErr',RealInBoxSeq-EstInBoxSeq);
     if OutputCountingSeq==1
 	if mod(Tidx,10)==0
 	    NumSeq=figure();
-	    axis([0 t 0 max([max(RealInBoxSeq),max(EstInBoxSeq)])]);
+	    %axis([0 t 0 max([max(RealInBoxSeq),max(EstInBoxSeq)])]);
 	    TimeIdx=linspace(0,t,Tidx);
-	    plot(TimeIdx,RealInBoxSeq(1:Tidx),'r-',TimeIdx,EstInBoxSeq(1:Tidx),'b-');
+	    %plot(TimeIdx,RealInBoxSeq(1:Tidx),'r-',TimeIdx,EstInBoxSeq(1:Tidx),'b-');
 	    xlabel('time (sec)');
 	    ylabel('Number(#)');
 	    legend('Ground truth','Estimated num.');
@@ -166,20 +159,23 @@ for t=0:deltaT:T % for each time
 
     
     if OutputUI==1
-    subplot(ChannelLive);
+    figure(ChannelLive);
+    clf();
     text(XSize,YSize,['Time=',num2str(t)]);
-    plot(OutlineX(1,:),OutlineY(1,:),'-');
+    %plot(OutlineX(1,:),OutlineY(1,:),'-');
     hold on;
-    for i=2:BPSDeployment.num
-	plot(OutlineX(i,:),OutlineY(i,:),'-');
-    end
+    %for i=2:BPSDeployment.num
+	%plot(OutlineX(i,:),OutlineY(i,:),'-');
+    %end
 
-    for i=1:BPSDeployment.num
-	if SensorReading(i)==1
-	    fill(OutlineX(i,:),OutlineY(i,:),'red');
-	end
-    end
+    %for i=1:BPSDeployment.num
+	%if SensorReading(i)==1
+	    %fill(OutlineX(i,:),OutlineY(i,:),'red');
+	%end
+    %end
     plot(AgentPos(:,1),AgentPos(:,2),'kp');
+    plot(EstAgentPos(:,1),EstAgentPos(:,2),'go');
+    plot(BPSDeployment.X,BPSDeployment.Y,'rd');
     hold off;
     axis equal;
     axis ([0 XSize 0 YSize ]);
@@ -187,14 +183,6 @@ for t=0:deltaT:T % for each time
     ylabel('Y(m)');
     %title(['time',num2str(t)]);
     print('-dpdf',['ui',num2str(t),'.pdf']);
-    subplot(UDG);
-    TriggeredBMS=find(SensorReading>0);
-    plot(ActiveBPS.X,ActiveBPS.Y,'d');
-    hold on
-    gplot(ThisUDG,[ActiveBPS.X,ActiveBPS.Y]);
-    axis equal;
-    axis ([0 XSize 0 YSize ]);
-    hold off
     %pause(deltaT/100);
     end
     Tidx=Tidx+1;

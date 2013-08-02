@@ -206,6 +206,7 @@
 % *** SPECIALIZED LIST PACKAGES ***
 %
 \usepackage{algorithmic}
+\usepackage{algorithm}
 % algorithmic.sty was written by Peter Williams and Rogerio Brito.
 % This package provides an algorithmic environment fo describing algorithms.
 % You can use the algorithmic environment in-text or within a figure
@@ -593,6 +594,9 @@ $\mathbf{X}_t(T_{1:m})$ condition on $\tilde{D}_t$,
     \hat{\mathbf{X}}_t(T_{1:m})=\argmax_{\mathbf{X}_t(T_{1:m})} p(\mathbf{X}_t(T_{1:m})|\tilde{D}_t)
     \label{equ:ML}
 \end{equation}
+The brutal force algorithm to solve equation \ref{equ:ML} is to go through $N_a$
+possible assignment. With each assignment, we can get a candidate for
+$\mathbf{X}_t(T_{1:m})$ 
 
 \section{Analysis and Algorithm}
 Determined by the character of NUP, only incomplete and anonymous distance measurement
@@ -680,15 +684,82 @@ fixed on $R_i$ and the other end can reach big circle $(X_{t-1}(T_i),\alpha+\bet
 
 \begin{figure}[htpb]
     \begin{center}
-	\includegraphics[width=.4\textwidth]{LimitToArrange}
+	\includegraphics[width=.25\textwidth]{LimitToArrange}
     \end{center}
     \caption{The feasible arrangement can be inferred from last location and ranging
     error }
     \label{fig:LimitToArrange}
+\end{figure} 
+
+Theorem \ref{Thm:limit} shows that given $X_{t-1}(T_i)$, all distance with $T_i$ as
+origin at time $t$ should be able to touch the disk $(X_{t-1}(T_i),\alpha+\beta)$. This
+result can be used to reduce the feasible sub-group.  For each disk
+$(X_{t-1}(T_i),\alpha+\beta)$, the distance which can touch  this disk is denoted by
+$\tilde{D}_{t}^i$. Obviously $\tilde{D}_{t}^i\subset\tilde{D}_t$. Suppose in
+$\tilde{D}_{t}^i$, there are $m^j,j\in[1,n]$ distances which are obtained by receiver
+$R_j$. Then the number of assignment containing in $\tilde{D}_{t}^i$ is $N_a^i$, which equals
+to: 
+ \begin{equation}
+     \tilde{N}_a^i=\prod_{j=1}^n m_j 
+     \label{equ:nap}
+ \end{equation}
+Therefore $\tilde{D}_{t}^i$ can contribute $\tilde{N}_a^i$ candidate for $X_{t}(T_i)$.
+Because $m_j$ is the number of distance obtained by receiver $j$ whose length is
+constrained in small interval, $m_j<m$ with high probability.  We can set
+$\hat{X}_{t}(T_i)$ to be the one with maximum likelihood out of $\tilde{N}_a^i$
+candidates. Here the likelihood is considered evaluated by taking the validate of
+trajectory. We give trajectory with more stable velocity more likelihood, which is
+consist with how target move in practice. Technically, this consideration is achieved by
+involving particle filter. A Particle $\mathcal{P}_t^k(T_i)$ is a sequence of emitter
+$T_i$'s position candidate. For each $T_i$, there are $L$ particle is reserved. Once 
+$\tilde{N}_a^i$ position candidate is obtained at $t$, each of $L$ particles is
+concatenated with a new position candidate. Totally, $\tilde{N}_a^i\cdot L$ particles
+are obtained. These particle are sorted in ascending order of cost function, and only
+first $L$ is reserved. Suppose the location reserved in particle $k$ for target $i$ is
+denoted by $X'^k_t(T_i)$,The cost function is as follows:
+\begin{equation}
+    C(\mathcal{P}_t^k(T_i))= ||(X'^k_{t}(T_i)-X'^k_{t-1}(T_i))-(X'^k_{t-1}(T_i)-X'^k_{t-2}(T_i))||
+    \label{equ:cost1}
+\end{equation}
+
+In this estimation process, $X_{t-1}(T_i)$, the latest historical position of $T_i$,
+plays an important role. But $X_{t_1}(T_i)$ is affected by cumulated error.  To
+guarantee the accuracy of $X_{t-1}(t_i)$, a accuracy evaluation and reset method is
+plugged into the location process. As denoted in figure \ref{fig:DataFlow}, when we got
+$X_t(T_i)$, the validation of $X_t(T_i)$ is judged. If the judging result is \emph{Yes},
+$X_{t-1}(T_i)$ is updated by $X_t(T_i)$. Otherwise, we think $X_t(T_i)$ is not correct
+estimation. A \emph{reset} process is started. In reset process, each emitter is given a
+individual timeslot to guarantee the correctness of $X_{t-1}(T_i)$.
+\begin{figure}[htpb]
+    \begin{center}
+	\includegraphics[width=.25\textwidth]{DataFlow}
+    \end{center}
+    \caption{Plug validation module into locating process}
+    \label{fig:DataFlow}
 \end{figure}
 
+As a synthesis, the full algorithm for solving equation \ref{equ:ML} is presented. As
+this algorithm could support multiple emitter sending their NUP simultaneously, it is
+called \emph{UltraChorus}  
+\begin{algorithm}[h]
+    \caption{UltraChorus}
+    \begin{algorithmic}[1]
+	\REQUIRE $\tilde{D}_t$ is the set of distance measurement obtained at $t$.
+	$X(R_i),i\in[1,n]$ is the location of $n$ receivers. 
+	\ENSURE $\{\hat{X}_t(R_i)\},i\in[1,m]$ as the MLE to the location of $R_i,
+	i\in[1,m]$.
+	\IF {isFirstRound}
+	\STATE Reset();
+	\STATE isFirstRound $\leftarrow$ FALSE;
+	\STATE $\mathcal{P}^k(T_i)\leftarrow\emptyset,\forall i=[1,m],k=[1,L]$ 
+	\ENDIF
+	\FOR {$i=1,i\le m;i++$} 
+	\STATE $\tilde{D}'_t(T_i)=\leftarrow \{d|d\in\tilde{D}_t,||d-|| \}$
+	\ENDFOR
+    \end{algorithmic}
+    \label{algo:LB}
+\end{algorithm}
 \section{Evaluation}
-
 \section{Conclusion}
 %\bibliographystyle{acm}
 \bibliographystyle{unsrt}
