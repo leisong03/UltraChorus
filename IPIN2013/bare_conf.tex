@@ -128,8 +128,9 @@
 %
 \ifCLASSINFOpdf
   \usepackage[pdftex]{graphicx}
+  \usepackage{subfigure}
   % declare the path(s) where your graphic files are
-  % \graphicspath{{../pdf/}{../jpeg/}}
+  \graphicspath{{./fig/}{../jpeg/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
   % \DeclareGraphicsExtensions{.pdf,.jpeg,.png}
@@ -139,7 +140,7 @@
   % driver is specified.
   % \usepackage[dvips]{graphicx}
   % declare the path(s) where your graphic files are
-  \graphicspath{{./fig/}}
+  %\graphicspath{{./fig/}}
   % and their extensions so you won't have to specify these with
   % every instance of \includegraphics
   % \DeclareGraphicsExtensions{.eps}
@@ -171,6 +172,9 @@
 % *** MATH PACKAGES ***
 %
 \usepackage[cmex10]{amsmath}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
 % A popular package from the American Mathematical Society that provides
 % many useful and powerful commands for dealing with mathematics. If using
 % it, be sure to load this package with the cmex10 option to ensure that
@@ -186,6 +190,14 @@
 % does. amsmath.sty is already installed on most LaTeX systems. The latest
 % version and documentation can be obtained at:
 % http://www.ctan.org/tex-archive/macros/latex/required/amslatex/math/
+
+\newtheorem{definition}{Definition}
+\newtheorem{theorem}{Theorem}
+%\newtheorem{proof}{Proof}
+\newtheorem{lemma}{Lemma}
+\newtheorem{assumption}{Assumption}
+\newtheorem{proposition}{Proposition}
+\newtheorem{example}{Example}
 
 
 
@@ -318,7 +330,7 @@
 % that authors should try to avoid such use. Do not be tempted to use the
 % cuted.sty or midfloat.sty packages (also by Sigitas Tolusis) as IEEE does
 % not format its papers in such ways.
-
+\DeclareMathOperator*{\argmax}{arg\,max}
 
 
 
@@ -352,23 +364,23 @@
 %
 % paper title
 % can use linebreaks \\ within to get better formatting as desired
-\title{UltraChronic: Tracking multiple single frequency emitter Simultaneously }
-
+%\title{Locate multiple ultrasound emitters on unique frequency simultaneously}
+\title{On locating multiple ultrasound emitter in chorus}
 
 % author names and affiliations
 % use a multiple column layout for up to three different
 % affiliations
-\author{NEC Labs China}
-%\author{\IEEEauthorblockN{Lei Song}
-%\IEEEauthorblockA{NEC Labs China\\
-%Beijing, China \\
-%Email:Song\_lei@nec.cn}
-%\and
-%\IEEEauthorblockN{Yongcai Wang}
-%\IEEEauthorblockA{IIIS, Tsinghua University\\
-    %Beijing, China \\
-%Email: wangyc@tsinghua.edu.cn}
-%}
+%\author{Lei Song, IIIS}
+\author{\IEEEauthorblockN{Lei Song}
+\IEEEauthorblockA{NEC Labs China\\
+Beijing, China \\
+Email:Song\_lei@nec.cn}
+\and
+\IEEEauthorblockN{Yongcai Wang}
+\IEEEauthorblockA{IIIS, Tsinghua University\\
+   Beijing, China \\
+Email: wangyc@tsinghua.edu.cn}
+}
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -402,33 +414,30 @@
 
 
 % make the title area
-\maketitle
 
+\maketitle
 
 \begin{abstract}
 %\boldmath
-Although positioning by ultrasound pulse is not fairly new as research problem, there
-are still some open issues on this topic. In this paper, an interesting issue, that how
-to locate multiple ultrasound transmitters simultaneously, is addressed. The challenge
-of this issues come from two folds. Firstly, Two pieces of ultrasound pulse, if overlapped at 
-receiver end, will not be separated efficiently. Secondly, two piece of ultrasound pulse,
-even not overlapped, can not be distinguished from the receiver end. This   
-To solve this
-problem, a novel positioning method named UltraChorus is proposed. In UltraChorus
-system, we allow more than one emitter to send ultrasound pulse simultaneously and try
-to locate them separately.  After emitting, a set
-
-of distance measurements with unknown-origin is obtained by receivers, which are
-required to match to each transmitter. To solve this optimal match problem, we proposed
-a cluttering algorithm named Density-Ball to find an approximate solution. This
-algorithm is designed with an obvious intuition, that positioning results produced by
-any subgroups of distance measurement from the same transmitter are close to each other.
-The position of transmitters can be estimated by the center of each local density center
-in 3D space containing all positioning result.  UltraChorus is implemented and evaluated
-in both simulation and demo system. It is verified that, the positioning accuracy of
-UltraChorus is close to the system running TDMA protocol without loss of refresh-rate.
-To adapt to the real environment, how measurement error, caused by NLOS propagation and
-overlapping of ultrasound pulse, affect the accuracy of UltraChorus is analyzed. 
+Although TOA based positioning by narrow-band ultrasound is not fairly new as research
+problem, there are still some open questions. In this paper, an interesting issue, that
+how to locate multiple ultrasound transmitters simultaneously, is addressed.  This
+problem is difficult because of two reasons. Firstly, Two segments of ultrasound wave on
+same frequency, if overlapped in time-domain at receiver end, can not be separated
+efficiently.  Secondly, the emitter of narrow-band ultrasound signal can not be
+identified on the receiver end.  To avoid collision and anonymity, emitters are arranged
+to non-overlapped timeslot in traditional TOA based positioning system. The disadvantage
+of timeslot based mechanism is obvious, that the refreshing rate drops when number of
+timeslot increase.  In this paper, we reduce the number of timeslots by allowing
+multiple emitters to send ultrasound signal simultaneously. Although the collision and
+anonymity of ultrasound signal are still inevitable at receiver end, the position of
+each emitter can be estimated by assigning the incomplete TOA measurement to several
+groups and adjust the assignment according to make distance measurements in each group
+are consistent with each other. As the feasible assignment is exponential to number of emitter,
+which are intractable to go through, importance sampling and particle filter is used to
+reduce the number of feasible assignment by taking historical position of each emitter
+into account. This method is named \emph{UltraChorus} because emitter can ``sing''
+concurrently. The performance of UltraChorus is evaluated by multi-agent simulation.
 \end{abstract}
 % IEEEtran.cls defaults to using nonbold math in the Abstract.
 % This preserves the distinction between vectors and scalars. However,
@@ -450,16 +459,239 @@ overlapping of ultrasound pulse, affect the accuracy of UltraChorus is analyzed.
 \IEEEpeerreviewmaketitle
 
 \section{Introduction}
-In ultrasound pulse based positioning system, two or more ultrasound transmitters are
-not allowed to emit pulse at the same time, because the source of the ultrasound pulse
-is not distinguishable after emitting. Previous ultrasound pulse based positioning
-systems, such as bat and cricket, are designed according to this principle, in which
-transmitters are working in TDMA protocol. The drawback of this design is that
-refresh-rate drops linearly when number of transmitter increases.  As a result, the
-number of concurrent positioned targets is limited.
+Using narrow-band ultrasound pulse (NUP) as ranging media for TOA positioning is
+popular in wireless sensor network, because only basic I/O ability on
+transmitter/receiver is required to get TOA measurement of high precision. In
+corresponding system, an ultrasound pulse is generated by transmitter and caught by
+receiver. By measuring the propagation time of the wave-front, the distance between
+transmitter and receiver can be obtained in centimeter level\cite{Priyantha:2000hx}.
+With measured distances the position of emitter can be located if the location of
+receivers are known.  In last decade, there are a lot of research focusing on this
+topic. In other word, so far, there are quite few thing we can do to improve the
+performance of narrow-band ultrasound in positioning system except some open issues.
+Among these issues, the contradict between number of supported emitters and positioning
+refreshing rate is a interesting one.  
 
+In narrow-band ultrasound signal based positioning system, two or more ultrasound
+transmitters are not allowed to emit signal at the same time. There are two reasons why
+this constrains exits. First reason is referred as \emph{anonymity} of ultrasound
+signal. Because there are no room to encode information into a narrow-band ultrasound
+pulse, receiver can not identify the source of a segment of ultrasound wave. The second
+reason is referred as \emph{collision} of ultrasound signal. When two or more segments
+of ultrasound wave from different transmitter overlaps in time domain on the receiver.
+Only the wave-front of the first one can be identified, while the wave-front of the
+other are lost. In this case, the number of TOA measurement is less than the number of
+transmitters.  
 
+Because of this two reasons, in previous NUP based positioning systems, such as bat and
+cricket,   transmitters are designed to work in TDMA protocol. In this case, in time
+slot occupied by $i$th transmitter, all the receivers only caught one pulse from $i$th
+transmitter, therefore the drawback of anonymity and collision is eliminated. But in
+the other hand, the refresh-rate of location  drops linearly to the number of emitter
+supported in this system. A trade-off between system capacity and positioning delay has
+to be made.
+
+Facing this issue, some research use encoded braodband ultrasound to replace NUP. Both
+\emph{anonymity} and {collision} are resolved by employing CDMA technology into both
+transmitter and receiver\cite{Hazas:2006tv}. To achieve encoding and decoding, high
+performance MCU or DSP is required, which increase the cost and reduce the batter-life.
+Some research try to use the AOA( angle of arrival) as compensate to increase the
+spatial resolution of receiver to tackle the simultaneously arrived
+pulse\cite{Yu:2009ix}. Both of these method required extra sensor of computing unit. 
+
+In this paper a new method to process simultaneously arrived ultrasound pulse is
+presented.  The basic idea is that we doesn't increase the sensing ability of existing
+system such as cricket and bat, although they produce incomplete  measurement when
+emitters start to work simultaneously. All we want to do is infer the location of target
+by post-processing on incomplete measurement.  More specially, we infers feasible
+location of each target and find the set of location with maximum likelihood as
+estimation result. In this process, we reduce the complexity of finding feasible
+location by involving estimated location of emitters in previous instant as
+prior-knowledge. 
+
+The rest part of this paper is organized as follows, in section 2 the formal statement
+of problem addressed in this paper is presented. In section 3, the method named
+\emph{UltraChorus} is proposed as solution to NUP based multi-emitter locating problem. 
+In section 4, the method is evaluated by simulation.
 % that's all folks
+\section{Problem modeling}
+The system component of TOA based positioning system working in timeslot is illustrated in
+figure \ref{fig:1ToN}. $m$ receivers are deployed in fixed spot, whose position is denoted
+by $X(R_i),i\in[1,m]$. $n$ mobile emitter can move freely, whose position is denoted
+by $X_t(T_i),i\in[1,n]$ at instant $t$. In timeslot occupied by $i$th emitter, emitter
+$i$ transmit the NUP and a radio signal at exactly the same time. Each receiver can catch
+the NUP and radio signal. By measuring the arrival time difference between NUP and radio signal.
+The distance between $T_i$ and $R_j,j\in[1,m]$, which is denoted by
+$D_t(T_i,R_j),j\in[1,m]$, can be obtained in one time slot. Briefly, in time slot mode,
+$m$ distance can be obtained in one time slot. The origin of all distance is $T_i$.
+Based on $D_t(T_i,R_j),j\in[1,m]$ and $X(R_j),j\in[1,m]$, $X(T_i)$ can be calculated. 
+As a result, for $m$ emitter, $m$ time slot is required to locate all emitter with
+certainty.
+
+\begin{figure}
+    \subfigure[Working in timeslot]{
+	\label{fig:1ToN} %% label for first subfigure
+	\begin{minipage}[b]{0.22\textwidth}
+	    \centering
+	    \includegraphics[width=\textwidth]{1ToN}
+	\end{minipage}
+    }
+    \hspace{.02\textwidth}
+    \subfigure[Working in chorus]{
+	\label{fig:NToN} %% label for second subfigure
+	\begin{minipage}[b]{0.22\textwidth}
+	    \centering
+	    \includegraphics[width=\textwidth]{NtoN}
+	\end{minipage}}
+    \caption{The system architecture of TOA Based positioning system working on
+    different mode}
+    \label{fig:systemcomponents} %% label for entire figure
+\end{figure}
+
+When system working in chorus mode, the system architecture is shown in figure
+\ref{fig:NToN}. A new component, sync node, is added to the system. Once the sync node
+broadcast a radio signal at instance $t$, all receivers, $\{T_1,T_2,\dots,T_m\}$, emit
+the NUP simultaneously. In ideal case, on any receiver $R_i$, $m$ UDP from
+$T_i,i\in[1,m]$ are pairwise isolated in time domain, therefore we can obtain $n$
+distance from receiver $R_i$. Because the total number of receivers is $m$, $m\cdot n$
+distance, $D(R_i,T_j),i\in[1,m],j\in[1,n]$, can be obtained at instance $t$. 
+
+Although the working in chorus mode can greatly improve the number of distance obtained
+in one time slot, the \emph{anonymity} and \emph{collision} is inevitable. Even in the
+ideal mode, because the origin of each distance is unknown, we had to assign the $mn$
+distance measurement into $m$ subgroup before positioning. We can find all possible
+assignment within $n$ round. At round $j$, we choose one out of $m$ distance reported
+by each receiver and put them into subgroup $j$. After $n$ round, the $mn$ distance is
+separated into $m$ subgroup. We can apply positioning algorithm on each subgroup to get
+feasible position for each emitter. The number of different assignment is 
+\begin{equation}
+    N_a=m!^{n-1}
+    \label{equ:assign}
+\end{equation}
+
+Because the distance in one subgroup are not always consist with each other and can not
+produce valid position estimation. Most of the assignment are not feasible. But is
+intractable to go through $N_a$ assignment to find the most feasible one. Briefly, the
+\emph{anonymity} can introduce complexity that can not be tolerated.
+
+In unideal state, the UDP on each receiver can not be separated in time domain. Because
+only the first wave-front can be detected, some distance measurement are lost. As a
+result the distance we can get in one timeslot is less than $mn$ but greater than $m$.
+Briefly, the distance set is incomplete due to the \emph{collision} happened in receiver
+end.
+
+Taking both \emph{collision} issue and \emph{anonymity} issue into account, the formal
+statement of problem addressed in this paper comes as follow. 
+
+\emph{Give:} location of receivers, $X(R_i),i\in[1,n]$, and incomplete distance measurement
+$\tilde{D}_t\subset\{D(R_i,T_j),i\in[1,m]\}$ at instant $t$. 
+
+\emph{Ensure:} let $\mathbf{X}_t(T_{1:m})$ denote the location of $m$ emitters
+at instant $t$. Then we want to find the maximum likelihood estimation to
+$\mathbf{X}_t(T_{1:m})$ condition on $\tilde{D}_t$, 
+\begin{equation}
+    \hat{\mathbf{X}}_t(T_{1:m})=\argmax_{\mathbf{X}_t(T_{1:m})} p(\mathbf{X}_t(T_{1:m})|\tilde{D}_t)
+    \label{equ:ML}
+\end{equation}
+
+\section{Analysis and Algorithm}
+Determined by the character of NUP, only incomplete and anonymous distance measurement
+can be obtained on receiver. In this section the character of distance obtained on
+receiver is analyzed. Although information is not sufficient to locate each emitter
+directly, we found that solution space of equation \ref{equ:ML} can be reduced greatly and
+solution with maximum likelihood can be found with high probability. 
+
+\subsection{limitation of distance measurement}
+As discussed in last section, the incomplete is caused by the overlapping of NUP on
+receiver end. As shown in figure \ref{fig:overlap}, let $t_w$ denote the width of a NUP
+and  $t_\Delta$ denote the arrival time difference of two successive NUP. When
+$t_\Delta\le t_w$, they overlap. To reduce the probability of overlap, the width of NUP
+should be as small as possible.
+\begin{figure}[htpb]
+    \begin{center}
+	\includegraphics[width=.25\textwidth]{overlap}
+    \end{center}
+    \caption{Two successive NUP are overlapped if the interval is less than width }
+    \label{fig:overlap}
+\end{figure}
+ 
+In practice, the $t_w$ is determined by the length of NUP from emitter and the length of
+aftershock on receiver end. We measured these two length on  Cricket
+node\cite{Priyantha:2000hx} with oscilloscope. The result is shown in figure
+\ref{fig:OSC}, in which the upper channel is the wave captured at emitter and the lower
+channel is the wave captured at receiver end. At emitter end, the length of NUP is about
+$100\mu s$, while in receiver end this length is about $5ms$. This experiment show that
+the $t_w$ in Cricket is about $5ms$, any two successive NUP with interval
+shorter than $5ms$ overlaps with each other. As the NUP is only $100\mu s$ at emitter
+side, the $5ms$ NUP at receiver is mainly aftershock. As the aftershock is decided by
+the sensing character of device, $t_w$ can be considered as a constant. 
+\begin{figure}[htpb]
+    \begin{center}
+    \includegraphics[width=.3\textwidth]{OSC}
+    \caption{The NUP on emitter and receiver}
+    \label{fig:OSC}
+    \end{center}
+\end{figure}
+Obviously ranging error caused by overlapping is upper bounded by $t_w \times V_u$, if
+overlapping of 3 or more NUP never happens. Here $V_u$ is the velocity of ultrasound.
+Here we constrains the number of overlapping NUP to guarantee maximum width of
+overlapped NUP. How to achieve this ``at most 2'' constrains will be explained later. 
+Taking $t_w$ in Cricket node and $V_u$ in normal condition as example, $t_w V_u=1.65m$.
+
+\subsection{Limit of emitters' movement }
+Although the motion of emitter is unpredictable, their trajectory still satisfy 
+basic criteria, says the trajectory of emitter is continuous in spatial.
+Therefore the location of emitter at $t$ is more close to its location at $t-1$ than the
+location of other emitter at time $t-1$. I.e., following equation holds,
+\begin{equation}
+    \begin{split}
+	&\forall j\in[1,m],j\ne i\\
+	&p(||X_t(T_i)-X_{t-1}(T_i)||<||X_t(T_i)-X_{t-1}(T_j)||)=1-\delta
+    \end{split}
+    \label{equ:closeto}
+\end{equation}
+where $\delta$ is a small positive number. With equation \ref{equ:closeto}, we can draw
+the conclusion that positions of $T_i$ at $t$ and $t-1$ are close with high probability.
+Especially, if a emitter is attached to an object whose maximum velocity known, then
+$||X_t(T_i)-X_{t-1}(T_i)||$ is upper bounded by positioning interval times maximum
+velocity with high probability. i.e. $X_t(T_i)$ is in a circle with high probability,
+whose center is $X_{t-1}(T_i)$ and radius is $r_i$. Here $r_i$ is determined by sampling
+interval and velocity of $T_i$. 
+
+\subsection{Location algorithm}
+By combining limit of distance measurement and of emitters' movement, we can limit the
+feasible arrangement. As shown in figure \ref{fig:LimitToArrange}. The feasible
+$X_t(T_i)$ is limited to circle $(X_{t-1}(T_i), \alpha), \alpha=V_e\cdot\Omega$, while
+$V_e$ is the upper bounder of emitter's velocity. For each receiver $R_j$,there are must
+be a distance $D_t(R_j,T_i)$ from receiver $R_j$ can reach a point in cycle
+$(X_t(T_i),\beta),\beta=V_u\cdot T_w$. As a result, following theorem holds.
+\begin{theorem}
+    For any emitter $T_i$, given $X_t(T_i)$ and $\tilde{D}_t$. There must be a set of distance 
+    $\{\tilde{d}_t^j\}\subset \tilde{D}_t,j\in[1,n]$. Such that $\forall
+    j\in[1,n]$, $\tilde{d}_t^j$ has one end in $X{R_i}$ and the other ender can
+    reach circle $(X_{t-1}(T_i),\alpha+\beta)$ 
+    \label{Thm:limit}
+\end{theorem}
+\begin{proof}
+Apply limit of distance measurement and limit of emitters' movement together.
+For each receiver, there must exists one distance measurement with one end
+fixed on $R_i$ and the other end can reach big circle $(X_{t-1}(T_i),\alpha+\beta)$
+\end{proof}
+
+\begin{figure}[htpb]
+    \begin{center}
+	\includegraphics[width=.4\textwidth]{LimitToArrange}
+    \end{center}
+    \caption{The feasible arrangement can be inferred from last location and ranging
+    error }
+    \label{fig:LimitToArrange}
+\end{figure}
+
+\section{Evaluation}
+
+\section{Conclusion}
+%\bibliographystyle{acm}
+\bibliographystyle{unsrt}
+\bibliography{IPIN}
+
 \end{document}
-
-
